@@ -14,8 +14,7 @@ app.post("/stock",async(req,res) =>{
     try {
         const item = req.body;
         const newItem = await pool.query(
-            "INSERT INTO stock_item (item_name,item_quantity, item_value) VALUES($1,$2,$3) RETURNING *",
-            [item["name"],item["quantity"],item["value"]]
+            `INSERT INTO stock_item (item_name,item_quantity, item_value) VALUES(${item["item_name"]},${item["item_quantity"]},${item["item_value"]}) RETURNING *`
             )
         console.log(req.body);
         res.json(newItem.rows);
@@ -37,7 +36,7 @@ app.get("/stock",async(req,res) =>{
 app.get("/stock/:id",async(req,res) =>{
     try {
         const {id} = req.params;
-        const item = await pool.query("SELECT * FROM stock_item WHERE item_id = $1",[id])
+        const item = await pool.query(`SELECT * FROM stock_item WHERE item_id = ${id}`)
         res.json(item.rows);
     } catch (error) {
         console.log(error.message);
@@ -49,20 +48,29 @@ app.put("/stock/:id",async(req,res) =>{
         const {id} = req.params;
         const item = req.body;
         
-        let sql = "UPDATE stock_item";
+        let sql = "UPDATE stock_item ";
         const iKeys = Object.keys(item);
         sql += iKeys.length && 'SET ' || '';
         sql += iKeys.map(key => typeof item[key] === 'string' ? ` ${key} = '${item[key]}'` : ` ${key} = ${item[key]}`).join(', ');
-        sql += `WHERE item_id = ${id}`;
-        const newItem = await pool.query(sql)
-        console.log(req.body);
-        
-        res.json(newItem.rows);
+        sql += ` WHERE item_id = ${id}`;
+        const upItem = await pool.query(sql)
+        res.json("Item Updated");
+
     } catch (error) {
         console.log(error.message);
     }
 });
 // delete item
+app.delete("/stock/:id",async(req,res) =>{
+    try {
+        const {id} = req.params;
+        const deleteItem = await pool.query(`DELETE FROM stock_item WHERE item_id = ${id}`)
+        res.json("Deleted item");
+    } catch (error) {
+        console.log(error.message);
+    }
+});
+
 
 app.listen(5000, () => {
     console.log("server started on port 5000")
